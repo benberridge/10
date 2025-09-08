@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sonic10 Mint Page</title>
+  <!-- Ethers.js CDN -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js"
+          type="application/javascript"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 400px;
+      margin: 2em auto;
+      text-align: center;
+    }
+    label, select, button {
+      margin: 0.5em 0;
+      font-size: 1em;
+    }
+    button {
+      padding: 0.5em 1em;
+      cursor: pointer;
+    }
+    #status {
+      margin-top: 1em;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>Sonic10 NFT Mint</h1>
+
+  <label for="power-select">Power:</label>
+  <select id="power-select">
+    <!-- options 1–10, default selected = 1 -->
+    <option value="1" selected>1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+    <option value="4">4</option>
+    <option value="5">5</option>
+    <option value="6">6</option>
+    <option value="7">7</option>
+    <option value="8">8</option>
+    <option value="9">9</option>
+    <option value="10">10</option>
+  </select>
+
+  <br />
+
+  <button id="mint-button">Mint</button>
+
+  <div id="status"></div>
+
+  <script type="application/javascript">
+    // Replace with your Sonic10 contract’s ABI
+    const SONIC10_ABI = [
+      "function feeForPower(uint8 power) public view returns (uint256)",
+      "function mint(uint8 power) external payable",
+    ];
+    const CONTRACT_ADDRESS = "0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778";
+
+    const statusEl = document.getElementById("status");
+    const powerSelect = document.getElementById("power-select");
+    const mintButton = document.getElementById("mint-button");
+
+    async function mint() {
+      // Reset status
+      statusEl.textContent = "";
+
+      // Prompt user to connect wallet if needed
+      if (!window.ethereum) {
+        statusEl.textContent = "Please install MetaMask or a compatible wallet.";
+        return;
+      }
+      await window.ethereum.request({ method: "eth_requestAccounts" });
+
+      // Setup provider, signer, contract
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer   = provider.getSigner();
+      const sonic10  = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
+
+      // Read selected power
+      const power = parseInt(powerSelect.value, 10);
+
+      try {
+        // 1) Fetch required fee
+        statusEl.textContent = "Fetching fee…";
+        const fee = await sonic10.feeForPower(power);
+
+        // 2) Send mint transaction with ETH value
+        statusEl.textContent = "Sending transaction…";
+        const tx = await sonic10.mint(power, { value: fee });
+        statusEl.textContent = `Transaction sent: ${tx.hash}`;
+
+        // 3) Wait for confirmation
+        await tx.wait();
+        statusEl.textContent = `Mint confirmed! Token minted with power ${power}.`;
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = "Mint failed: " + (err.error?.message || err.message);
+      }
+    }
+
+    mintButton.addEventListener("click", mint);
+  </script>
+</body>
+</html>
