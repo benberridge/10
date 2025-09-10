@@ -53,8 +53,8 @@
     /* Banner with silver edge */
     .banner-wrapper {
       margin: 2rem auto 1rem;
-      max-width: 225px;   /* 300 * .75 */
-      width: 60%;         /* 80% * .75 */
+      max-width: 225px;      /* 300px × 0.75 */
+      width: 60%;            /* 80% × 0.75 */
       border-radius: 12px;
       background-image:
         linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)),
@@ -102,7 +102,7 @@
       justify-content: space-between;
     }
     .box {
-      flex: 0 0 352px;  /* 320px * 1.1 */
+      flex: 0 0 352px;  /* 320px × 1.1 */
       padding: 1rem;
       border-radius: 12px;
       background-image:
@@ -137,11 +137,13 @@
     .mint-controls label {
       font-weight: 500;
       color: #555;
+      display: block;
+      margin-bottom: 0.5rem;
     }
     .mint-controls select {
       width: 100%;
       padding: 0.5rem;
-      margin: 0.5rem 0 1.5rem;
+      margin-bottom: 1.5rem;
       border: 1px solid #ccc;
       border-radius: 6px;
       background: #fafafa;
@@ -188,13 +190,14 @@
       object-fit: contain;
     }
 
-    /* Mobile styles */
+    /* Mobile tweaks: only change here */
     @media (max-width: 768px) {
       .lower-section {
         position: static;
         transform: none;
         margin: 1rem 0;
-        padding: 0 1rem;
+        /* center first box under banner */
+        padding: 0 10%;
         display: flex;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
@@ -303,7 +306,7 @@
         return;
       }
       const sonic10 = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
-      const power = parseInt(powerSelect.value, 10);
+      const power   = parseInt(powerSelect.value, 10);
       try {
         statusEl.textContent = "Fetching fee…";
         const fee = await sonic10.feeForPower(power);
