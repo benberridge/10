@@ -3,13 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <title>Sonic10 Mint Page</title>
-
-  <!-- Google Font for a cleaner, modern typeface -->
+  <!-- Google Font -->
   <link
     href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
     rel="stylesheet"
   />
-
   <style>
     /* Reset & base */
     * {
@@ -22,43 +20,119 @@
       height: 100vh;
       position: relative;
       overflow: hidden;
-
-      /* Sonic network style animated background */
       background: linear-gradient(45deg, #0066cc, #00ccff, #001f4d, #0099ee);
       background-size: 400% 400%;
       animation: sonic-bg 20s ease infinite;
     }
-
     @keyframes sonic-bg {
       0%   { background-position: 0%   50%; }
       25%  { background-position: 50%  100%; }
       50%  { background-position: 100% 50%; }
-      75%  { background-position: 50%  0%; }
+      75%  { background-position: 50%   0%; }
       100% { background-position: 0%   50%; }
     }
 
-    /* Top-center banner */
-    .banner {
-      display: block;
-      margin: 2rem auto 1rem;
-      max-width: 300px;
-      width: 80%;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    /* Wallet button */
+    #wallet-button {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      padding: 0.5rem 1rem;
+      border: none;
+      border-radius: 6px;
+      background-color: #1e90ff;
+      color: #fff;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s ease;
+      z-index: 10;
+    }
+    #wallet-button:hover {
+      background-color: #007acc;
     }
 
-    /* Mint controls card, centre-left */
-    .mint-controls {
-      position: absolute;
-      left: 5%;
-      top: 50%;
-      transform: translateY(-50%);
-      background: rgba(255, 255, 255, 0.9);
+    /* Shrunk banner (25% smaller) with silver edge */
+    .banner-wrapper {
+      margin: 2rem auto 1rem;
+      max-width: 225px;   /* was 300px */
+      width: 60%;         /* was 80% */
       border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      padding: 2rem;
-      width: 320px;
+      position: relative;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.1), rgba(255,255,255,0.1)),
+        linear-gradient(45deg, #bbb, #ddd, #ccc, #eee);
+      background-clip: padding-box, border-box;
+      background-origin: padding-box, border-box;
+      border: 2mm solid transparent;
+      background-size: 100% 100%, 400% 400%;
+      animation: silver-edge 20s ease infinite;
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.25),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.6),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.2);
     }
+    .banner-wrapper img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+    @keyframes silver-edge {
+      0%   { background-position: 0%   0%,   0%   0%; }
+      25%  { background-position: 0% 100%,  50% 100%; }
+      50%  { background-position: 100% 0%, 100% 50%; }
+      75%  { background-position: 100% 100%, 50%   0%; }
+      100% { background-position:   0% 100%,   0%  50%; }
+    }
+
+    /* Orange ↔ blue edge keyframes */
+    @keyframes orange-blue-edge {
+      0%   { background-position: 0%   0%,   0%   0%; }
+      25%  { background-position: 0% 100%,  50% 100%; }
+      50%  { background-position: 100% 0%, 100% 50%; }
+      75%  { background-position: 100% 100%, 50%   0%; }
+      100% { background-position:   0% 100%,   0%  50%; }
+    }
+
+    /* Lower section: three light-orange/light-blue edged boxes */
+    .lower-section {
+      position: absolute;
+      top: 50%;
+      left: 5%;
+      width: 90%;
+      transform: translateY(-50%);
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .box {
+      width: 352px;           /* 10% wider than 320px */
+      padding: 1rem;
+      border-radius: 12px;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.9), rgba(255,255,255,0.9)),
+        linear-gradient(45deg, #FFB74D, #81D4FA, #FFE0B2, #B3E5FC);
+      background-clip: padding-box, border-box;
+      background-origin: padding-box, border-box;
+      border: 2mm solid transparent;
+      background-size: 100% 100%, 400% 400%;
+      animation: orange-blue-edge 20s ease infinite;
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.1),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.6),
+        inset -2px -2px 4px rgba(0, 0, 0, 0.2);
+    }
+    /* “Coming soon” style */
+    .box.coming-soon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: #555;
+    }
+
+    /* Mint controls inside left box */
+    .mint-controls { width: 100%; }
     .mint-controls h1 {
       font-size: 1.5rem;
       font-weight: 500;
@@ -103,75 +177,151 @@
       min-height: 1.2em;
       text-align: center;
     }
+
+    /* Social icons footer */
+    .socials {
+      position: absolute;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1rem;
+    }
+    .socials a {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
+    .socials a img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Mobile styles */
+    @media (max-width: 768px) {
+      /* stack banner + boxes */
+      .lower-section {
+        position: static;
+        transform: none;
+        margin-top: 1rem;
+        padding: 0 1rem;
+        justify-content: flex-start;
+        overflow-x: auto;
+      }
+      .box {
+        flex: 0 0 80%;
+        max-width: 80%;
+      }
+    }
   </style>
 </head>
-
 <body>
-  <!-- Top-center image from ArDrive -->
-  <img
-    src="https://d5z5gg6ru5enr7l6wb6sdgcjdmju3qtap3eo4du77bry4udg2jiq.ardrive.net/H3PTG9GnSNj9frB9IZhJGxNNwmB-yO4On_hjjlBm0lE"
-    alt="Sonic10 Banner"
-    class="banner"
-  />
+  <!-- Wallet Connect/Disconnect -->
+  <button id="wallet-button">Connect Wallet</button>
 
-  <!-- Mint controls, positioned centre-left -->
-  <div class="mint-controls">
-    <h1>Sonic10 NFT Mint</h1>
-
-    <label for="power-select">Select Power</label>
-    <select id="power-select">
-      <option value="1" selected>1</option>
-      <option value="2">2</option>
-      <option value="3">3</option>
-      <option value="4">4</option>
-      <option value="5">5</option>
-      <option value="6">6</option>
-      <option value="7">7</option>
-      <option value="8">8</option>
-      <option value="9">9</option>
-      <option value="10">10</option>
-    </select>
-
-    <button id="mint-button">Mint</button>
-    <div id="status"></div>
+  <!-- Shrunk silver-edged banner -->
+  <div class="banner-wrapper">
+    <img
+      src="https://d5z5gg6ru5enr7l6wb6sdgcjdmju3qtap3eo4du77bry4udg2jiq.ardrive.net/H3PTG9GnSNj9frB9IZhJGxNNwmB-yO4On_hjjlBm0lE"
+      alt="Sonic10 Banner"
+    />
   </div>
 
-  <!-- Ethers.js -->
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+  <!-- Three light-orange/light-blue edged boxes -->
+  <div class="lower-section">
+    <!-- Left box: mint controls -->
+    <div class="box">
+      <div class="mint-controls">
+        <h1>Sonic10 NFT Mint</h1>
+        <label for="power-select">Select Power</label>
+        <select id="power-select">
+          <option value="1" selected>1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+          <option value="7">7</option>
+          <option value="8">8</option>
+          <option value="9">9</option>
+          <option value="10">10</option>
+        </select>
+        <button id="mint-button">Mint</button>
+        <div id="status"></div>
+      </div>
+    </div>
+
+    <!-- Middle box: Coming soon -->
+    <div class="box coming-soon">Coming soon</div>
+
+    <!-- Right box: Coming soon -->
+    <div class="box coming-soon">Coming soon</div>
+  </div>
+
+  <!-- Social icons footer (placeholders ready for your URLs) -->
+  <div class="socials">
+    <a href="#" id="docs-link">
+      <img src="PATH_TO_BOOK_ICON" alt="Docs">
+    </a>
+    <a href="#" id="x-link">
+      <img src="PATH_TO_X_ICON" alt="X">
+    </a>
+    <a href="#" id="telegram-link">
+      <img src="PATH_TO_TELEGRAM_ICON" alt="Telegram">
+    </a>
+  </div>
+
+  <!-- Ethers.js + mint/connect logic -->
+  <script src="https://cdn.ethers.io/lib/ethers-5.6.umd.min.js"></script>
   <script>
     const SONIC10_ABI = [
       "function feeForPower(uint8 power) public view returns (uint256)",
-      "function mint(uint8 power) external payable",
+      "function mint(uint8 power) external payable"
     ];
     const CONTRACT_ADDRESS = "0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778";
 
-    const statusEl     = document.getElementById("status");
-    const powerSelect  = document.getElementById("power-select");
-    const mintButton   = document.getElementById("mint-button");
+    const walletBtn   = document.getElementById("wallet-button");
+    const statusEl    = document.getElementById("status");
+    const powerSelect = document.getElementById("power-select");
+    const mintBtn     = document.getElementById("mint-button");
+
+    let provider, signer, account;
+
+    async function toggleWallet() {
+      if (!window.ethereum) {
+        alert("Please install MetaMask or another wallet.");
+        return;
+      }
+      if (!account) {
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        account  = accounts[0];
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        signer   = provider.getSigner();
+        walletBtn.textContent = "Disconnect";
+      } else {
+        account = null;
+        provider = signer = null;
+        walletBtn.textContent = "Connect Wallet";
+        statusEl.textContent = "";
+      }
+    }
+    walletBtn.addEventListener("click", toggleWallet);
 
     async function mint() {
       statusEl.textContent = "";
-
-      if (!window.ethereum) {
-        statusEl.textContent = "Please install MetaMask or a compatible wallet.";
+      if (!account) {
+        statusEl.textContent = "Please connect your wallet first.";
         return;
       }
-      await window.ethereum.request({ method: "eth_requestAccounts" });
-
-      const provider = new ethers.providers.Web3Provider(window.ethereum);
-      const signer   = provider.getSigner();
-      const sonic10  = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
-
+      const sonic10 = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
       const power = parseInt(powerSelect.value, 10);
-
       try {
         statusEl.textContent = "Fetching fee…";
         const fee = await sonic10.feeForPower(power);
-
         statusEl.textContent = "Sending transaction…";
         const tx = await sonic10.mint(power, { value: fee });
         statusEl.textContent = `Transaction sent: ${tx.hash}`;
-
         await tx.wait();
         statusEl.textContent = `Mint confirmed! Token minted with power ${power}.`;
       } catch (err) {
@@ -179,9 +329,15 @@
         statusEl.textContent = "Mint failed: " + (err.error?.message || err.message);
       }
     }
+    mintBtn.addEventListener("click", mint);
 
-    mintButton.addEventListener("click", mint);
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", accounts => {
+        account = accounts.length ? accounts[0] : null;
+        walletBtn.textContent = account ? "Disconnect" : "Connect Wallet";
+        if (!account) statusEl.textContent = "";
+      });
+    }
   </script>
 </body>
 </html>
-
