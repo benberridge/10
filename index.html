@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- CSP: allow self + jsDelivr for ES modules, permit inline CSS/JS -->
+  <!-- CSP: allow self + jsDelivr for module import, permit inline CSS/JS -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
           script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
           style-src  'self' https://fonts.googleapis.com 'unsafe-inline';
-          connect-src 'self' https://rpc.sonic.network;
+          connect-src 'self' https://rpc.sonic.network https://rpc.soniclabs.com;
           font-src   'self' https://fonts.gstatic.com;
           img-src    'self' data: https://*.ardrive.net;
         " />
@@ -18,8 +18,10 @@
   <title>Sonic10 Mint Page</title>
 
   <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
-        rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
 
   <style>
     /* Reset & base */
@@ -129,6 +131,7 @@
     }
   </style>
 </head>
+
 <body>
   <button id="wallet-button">Connect Wallet</button>
 
@@ -173,20 +176,20 @@
   <script type="module">
     import * as ethers from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
-    const SONIC10_ABI = [
+    const SONIC10_ABI     = [
       'function feeForPower(uint8 power) public view returns (uint256)',
       'function mint(uint8 power) external payable'
     ];
     const CONTRACT_ADDRESS = '0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778';
 
-    // Sonic network parameters
-    const SONIC_CHAIN_ID   = '0x2B67'; // 11111 decimal
+    // Sonic Mainnet parameters (official)
+    const SONIC_CHAIN_ID   = '0x92'; // 146 decimal
     const SONIC_CHAIN_DATA = {
       chainId: SONIC_CHAIN_ID,
-      chainName: 'Sonic Network',
-      nativeCurrency: { name: 'SONIC', symbol: 'SONIC', decimals: 18 },
-      rpcUrls: ['https://rpc.sonic.network'],
-      blockExplorerUrls: ['https://explorer.sonic.network']
+      chainName: 'Sonic Mainnet',
+      nativeCurrency: { name: 'Sonic Token', symbol: 'S', decimals: 18 },
+      rpcUrls: ['https://rpc.soniclabs.com'],
+      blockExplorerUrls: ['https://sonicscan.org']
     };
 
     const walletBtn   = document.getElementById('wallet-button');
@@ -219,25 +222,23 @@
 
     walletBtn.addEventListener('click', async () => {
       if (!window.ethereum) {
-        alert('Please install a wallet extension.');
-        return;
+        return alert('Please install a wallet extension (MetaMask, Rabby, etc.)');
       }
-
       if (!account) {
-        // Connect and switch to Sonic
+        // Connect and switch to official Sonic Mainnet
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           await handleAccountsChanged(accounts);
 
-          // attempt to switch network
+          // Switch network
           try {
             await window.ethereum.request({
               method: 'wallet_switchEthereumChain',
               params: [{ chainId: SONIC_CHAIN_ID }]
             });
           } catch (switchError) {
-            // if network not added, add it
             if (switchError.code === 4902) {
+              // Add network if missing
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [SONIC_CHAIN_DATA]
@@ -247,7 +248,7 @@
             }
           }
         } catch {
-          // user rejected
+          // User rejected connection
         }
       } else {
         // Disconnect: clear app state
