@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- CSP: allow self + jsDelivr for module import, permit inline CSS/JS -->
+  <!-- CSP: allow self + jsDelivr for ESM, permit inline CSS/JS -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
@@ -14,30 +14,28 @@
           img-src    'self' data: https://*.ardrive.net;
         " />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Sonic10 Mint Page</title>
 
   <!-- Google Font -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet" />
 
   <style>
     /* Reset & base */
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing:border-box; margin:0; padding:0; }
     body {
-      font-family: 'Roboto', sans-serif;
-      overflow-y: auto;
+      font-family:'Roboto',sans-serif;
+      overflow-y:auto;
       background: linear-gradient(45deg,#0066cc,#00ccff,#001f4d,#0099ee);
-      background-size: 400% 400%;
+      background-size:400% 400%;
       animation: sonic-bg 20s ease infinite alternate;
     }
-    @keyframes sonic-bg { from { background-position:0% 0% } to { background-position:100% 100% } }
+    @keyframes sonic-bg { from{background-position:0% 0%} to{background-position:100% 100%} }
 
     /* Wallet button */
     #wallet-button {
-      position: absolute; top:1rem; right:1rem;
+      position:absolute; top:1rem; right:1rem;
       padding:.5rem 1rem; border:none; border-radius:6px;
       background:#1e90ff; color:#fff; font-size:.9rem;
       cursor:pointer; transition:background .2s; z-index:10;
@@ -60,7 +58,7 @@
         inset -2px -2px 4px rgba(0,0,0,.2);
     }
     .banner-wrapper img { display:block; width:100%; border-radius:10px }
-    @keyframes silver-edge { from { background-position:0% 0%,0% 0% } to { background-position:100% 100%,100% 100% } }
+    @keyframes silver-edge { from{background-position:0% 0%,0% 0%} to{background-position:100% 100%,100% 100%} }
 
     /* Boxes */
     .lower-section {
@@ -86,7 +84,7 @@
       display:flex; align-items:center; justify-content:center;
       font-size:1.25rem; color:#555;
     }
-    @keyframes orange-blue-edge { from { background-position:0% 0%,0% 0% } to { background-position:100% 100%,100% 100% } }
+    @keyframes orange-blue-edge { from{background-position:0% 0%,0% 0%} to{background-position:100% 100%,100% 100%} }
 
     /* Mint controls */
     .mint-controls { width:100% }
@@ -225,12 +223,10 @@
         return alert('Please install a wallet extension (MetaMask, Rabby, etc.)');
       }
       if (!account) {
-        // Connect and switch to official Sonic Mainnet
+        // Connect + switch to Sonic Mainnet
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           await handleAccountsChanged(accounts);
-
-          // Switch network
           try {
             await window.ethereum.request({
               method: 'wallet_switchEthereumChain',
@@ -238,7 +234,6 @@
             });
           } catch (switchError) {
             if (switchError.code === 4902) {
-              // Add network if missing
               await window.ethereum.request({
                 method: 'wallet_addEthereumChain',
                 params: [SONIC_CHAIN_DATA]
@@ -248,14 +243,26 @@
             }
           }
         } catch {
-          // User rejected connection
+          // user rejected
         }
       } else {
-        // Disconnect: clear app state
+        // Disconnect sequence:
+        // 1) revoke eth_accounts permission
+        try {
+          await window.ethereum.request({
+            method: 'wallet_requestPermissions',
+            params: [{ eth_accounts: {} }]
+          });
+        } catch (e) {
+          console.warn('Permissions revoke failed:', e);
+        }
+        // 2) provider-specific disconnect
         if (typeof window.ethereum.disconnect === 'function') {
           await window.ethereum.disconnect();
         }
+        // 3) reload to reset everything
         handleAccountsChanged([]);
+        window.location.reload();
       }
     });
 
@@ -267,7 +274,6 @@
       }
       const power    = parseInt(powerSelect.value, 10);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
-
       try {
         statusEl.textContent = 'Fetching fee…';
         const fee = await contract.feeForPower(power);
