@@ -215,7 +215,7 @@
         account  = accts[0];
         provider = new ethers.providers.Web3Provider(engine);
         signer   = provider.getSigner();
-        walletBtn.textContent = 'Disconnect';
+        walletBtn.textContent = 'Connected';
       } else {
         account = signer = provider = null;
         walletBtn.textContent = 'Connect Wallet';
