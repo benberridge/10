@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- CSP: allow self + jsDelivr for module import, permit inline CSS/JS -->
+  <!-- CSP: allow self + jsDelivr for ES modules, permit inline CSS/JS -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
@@ -18,10 +18,8 @@
   <title>Sonic10 Mint Page</title>
 
   <!-- Google Font -->
-  <link
-    href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
-    rel="stylesheet"
-  />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet" />
 
   <style>
     /* Reset & base */
@@ -122,16 +120,15 @@
     .socials img { width:100%; height:100%; object-fit:contain }
 
     /* Mobile tweaks */
-    @media(max-width:768px) {
-      .lower-section {
+    @media(max-width:768px){
+      .lower-section{
         position:static; transform:none; margin:1rem 0; padding:0 10%;
         display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
       }
-      .box { flex:0 0 80%; max-width:80%; scroll-snap-align:start }
+      .box{ flex:0 0 80%; max-width:80%; scroll-snap-align:start }
     }
   </style>
 </head>
-
 <body>
   <button id="wallet-button">Connect Wallet</button>
 
@@ -182,6 +179,16 @@
     ];
     const CONTRACT_ADDRESS = '0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778';
 
+    // Sonic network parameters
+    const SONIC_CHAIN_ID   = '0x2B67'; // 11111 decimal
+    const SONIC_CHAIN_DATA = {
+      chainId: SONIC_CHAIN_ID,
+      chainName: 'Sonic Network',
+      nativeCurrency: { name: 'SONIC', symbol: 'SONIC', decimals: 18 },
+      rpcUrls: ['https://rpc.sonic.network'],
+      blockExplorerUrls: ['https://explorer.sonic.network']
+    };
+
     const walletBtn   = document.getElementById('wallet-button');
     const statusEl    = document.getElementById('status');
     const powerSelect = document.getElementById('power-select');
@@ -191,9 +198,9 @@
 
     async function handleAccountsChanged(accounts) {
       if (accounts.length > 0) {
-        account = accounts[0];
+        account  = accounts[0];
         provider = new ethers.providers.Web3Provider(window.ethereum);
-        signer  = provider.getSigner();
+        signer   = provider.getSigner();
         walletBtn.textContent = 'Disconnect';
       } else {
         account = signer = provider = null;
@@ -215,15 +222,35 @@
         alert('Please install a wallet extension.');
         return;
       }
+
       if (!account) {
+        // Connect and switch to Sonic
         try {
           const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
           await handleAccountsChanged(accounts);
+
+          // attempt to switch network
+          try {
+            await window.ethereum.request({
+              method: 'wallet_switchEthereumChain',
+              params: [{ chainId: SONIC_CHAIN_ID }]
+            });
+          } catch (switchError) {
+            // if network not added, add it
+            if (switchError.code === 4902) {
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [SONIC_CHAIN_DATA]
+              });
+            } else {
+              console.warn('Network switch error:', switchError);
+            }
+          }
         } catch {
           // user rejected
         }
       } else {
-        // Rabby-specific disconnect if available
+        // Disconnect: clear app state
         if (typeof window.ethereum.disconnect === 'function') {
           await window.ethereum.disconnect();
         }
@@ -237,8 +264,9 @@
         statusEl.textContent = 'Please connect your wallet first.';
         return;
       }
-      const power = parseInt(powerSelect.value, 10);
+      const power    = parseInt(powerSelect.value, 10);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
+
       try {
         statusEl.textContent = 'Fetching fee…';
         const fee = await contract.feeForPower(power);
