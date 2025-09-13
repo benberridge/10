@@ -22,16 +22,17 @@
 
   <style>
     /* Reset & base */
-    * { box-sizing:border-box; margin:0; padding:0 }
+    * { box-sizing: border-box; margin:0; padding:0 }
     body {
-      font-family:'Roboto',sans-serif;
-      overflow-y:auto;
+      font-family: 'Roboto', sans-serif;
+      overflow-y: auto;
       background: linear-gradient(45deg,#0066cc,#00ccff,#001f4d,#0099ee);
       background-size:400% 400%;
       animation: sonic-bg 20s ease infinite alternate;
     }
     @keyframes sonic-bg { from{background-position:0% 0%} to{background-position:100% 100%} }
 
+    /* Wallet button */
     #wallet-button {
       position:absolute; top:1rem; right:1rem;
       padding:.5rem 1rem; border:none; border-radius:6px;
@@ -40,6 +41,7 @@
     }
     #wallet-button:hover { background:#007acc }
 
+    /* Banner */
     .banner-wrapper {
       margin:2rem auto 1rem; max-width:225px; width:60%; border-radius:12px;
       background-image:
@@ -57,6 +59,7 @@
     .banner-wrapper img { display:block; width:100%; border-radius:10px }
     @keyframes silver-edge { from{background-position:0% 0%,0% 0%} to{background-position:100% 100%,100% 100%} }
 
+    /* Boxes */
     .lower-section {
       position:absolute; top:50%; left:5%; width:90%;
       transform:translateY(-50%);
@@ -82,6 +85,7 @@
     }
     @keyframes orange-blue-edge { from{background-position:0% 0%,0% 0%} to{background-position:100% 100%,100% 100%} }
 
+    /* Mint controls */
     .mint-controls { width:100% }
     .mint-controls h1 {
       font-size:1.5rem; font-weight:500;
@@ -106,6 +110,7 @@
       text-align:center; min-height:1.2em;
     }
 
+    /* Social footer */
     .socials {
       position:absolute; bottom:1rem; left:50%;
       transform:translateX(-50%); display:flex; gap:1rem;
@@ -113,12 +118,23 @@
     .socials a { width:24px; height:24px; display:block }
     .socials img { width:100%; height:100%; object-fit:contain }
 
+    /* Mobile tweaks */
     @media(max-width:768px){
       .lower-section {
-        position:static; transform:none; margin:1rem 0; padding:0 10%;
-        display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
+        position:static;
+        transform:none;
+        margin:1rem 0;
+        /* center the 80%-wide box under the banner */
+        padding: 0 calc((100% - 80%) / 2);
+        display:flex;
+        overflow-x:auto;
+        scroll-snap-type:x mandatory;
       }
-      .box { flex:0 0 80%; max-width:80%; scroll-snap-align:start; }
+      .box {
+        flex:0 0 80%;
+        max-width:80%;
+        scroll-snap-align:center;
+      }
     }
   </style>
 </head>
@@ -160,7 +176,7 @@
 
   <div class="socials">
     <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"></a>
-    <a href="#" id="x-link"><img src="PATH_TO_X_ICON" alt="X"></a>
+    <a href="#" id="x-link"  ><img src="PATH_TO_X_ICON"     alt="X"></a>
     <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
@@ -183,7 +199,7 @@
       blockExplorerUrls: ['https://sonicscan.org']
     };
 
-    // Multi-provider support
+    // multi-injected provider support (EIP-6963)
     const ethWindow = window.ethereum;
     const engine    = ethWindow?.providers?.[0] || ethWindow;
 
@@ -194,9 +210,9 @@
 
     let provider, signer, account;
 
-    async function handleAccountsChanged(accounts) {
-      if (accounts.length) {
-        account  = accounts[0];
+    async function handleAccountsChanged(accts) {
+      if (accts.length) {
+        account  = accts[0];
         provider = new ethers.providers.Web3Provider(engine);
         signer   = provider.getSigner();
         walletBtn.textContent = 'Disconnect';
@@ -210,23 +226,22 @@
     async function init() {
       if (!engine) return;
       provider = new ethers.providers.Web3Provider(engine);
-      const accounts = await provider.listAccounts();
-      await handleAccountsChanged(accounts);
+      const accts = await provider.listAccounts();
+      await handleAccountsChanged(accts);
       engine.on('accountsChanged', handleAccountsChanged);
     }
 
     walletBtn.addEventListener('click', async () => {
       if (!engine) {
-        alert('Please install a wallet extension (MetaMask, Rabby, etc.)');
+        alert('Please install a wallet extension.');
         return;
       }
 
       if (!account) {
-        // Connect + switch to Sonic Mainnet
+        // Connect + switch
         try {
           const accts = await engine.request({ method: 'eth_requestAccounts' });
           await handleAccountsChanged(accts);
-          // Attempt network switch
           try {
             await engine.request({
               method: 'wallet_switchEthereumChain',
@@ -240,11 +255,9 @@
               });
             }
           }
-        } catch {
-          // user rejected
-        }
+        } catch {}
       } else {
-        // revoke permission + reload
+        // revoke permission + reload 
         try {
           await engine.request({
             method: 'wallet_requestPermissions',
@@ -261,19 +274,19 @@
         statusEl.textContent = 'Please connect your wallet first.';
         return;
       }
-      const pwr = parseInt(powerSelect.value, 10);
-      const contract = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
+      const p = parseInt(powerSelect.value, 10);
+      const c = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
       try {
         statusEl.textContent = 'Fetching fee…';
-        const fee = await contract.feeForPower(pwr);
+        const fee = await c.feeForPower(p);
         statusEl.textContent = 'Sending transaction…';
-        const tx = await contract.mint(pwr, { value: fee });
+        const tx = await c.mint(p, { value: fee });
         statusEl.textContent = `Transaction sent: ${tx.hash}`;
         await tx.wait();
-        statusEl.textContent = `Mint confirmed! Power ${pwr}.`;
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = 'Mint failed: ' + (err.error?.message || err.message);
+        statusEl.textContent = `Mint confirmed! Power ${p}.`;
+      } catch (e) {
+        console.error(e);
+        statusEl.textContent = 'Mint failed: ' + (e.error?.message || e.message);
       }
     });
 
