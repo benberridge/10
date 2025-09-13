@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- CSP: allow self + jsDelivr for ESM, permit inline CSS/JS -->
+  <!-- CSP: self + jsDelivr ESM, allow inline CSS/JS -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
@@ -14,16 +14,15 @@
           img-src    'self' data: https://*.ardrive.net;
         " />
 
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Sonic10 Mint Page</title>
 
-  <!-- Google Font -->
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap"
         rel="stylesheet" />
 
   <style>
     /* Reset & base */
-    * { box-sizing:border-box; margin:0; padding:0; }
+    * { box-sizing: border-box; margin:0; padding:0 }
     body {
       font-family:'Roboto',sans-serif;
       overflow-y:auto;
@@ -31,9 +30,8 @@
       background-size:400% 400%;
       animation: sonic-bg 20s ease infinite alternate;
     }
-    @keyframes sonic-bg { from{background-position:0% 0%} to{background-position:100% 100%} }
+    @keyframes sonic-bg { from { background-position:0% 0% } to { background-position:100% 100% } }
 
-    /* Wallet button */
     #wallet-button {
       position:absolute; top:1rem; right:1rem;
       padding:.5rem 1rem; border:none; border-radius:6px;
@@ -42,7 +40,6 @@
     }
     #wallet-button:hover { background:#007acc }
 
-    /* Banner */
     .banner-wrapper {
       margin:2rem auto 1rem; max-width:225px; width:60%; border-radius:12px;
       background-image:
@@ -60,7 +57,6 @@
     .banner-wrapper img { display:block; width:100%; border-radius:10px }
     @keyframes silver-edge { from{background-position:0% 0%,0% 0%} to{background-position:100% 100%,100% 100%} }
 
-    /* Boxes */
     .lower-section {
       position:absolute; top:50%; left:5%; width:90%;
       transform:translateY(-50%);
@@ -86,7 +82,6 @@
     }
     @keyframes orange-blue-edge { from{background-position:0% 0%,0% 0%} to{background-position:100% 100%,100% 100%} }
 
-    /* Mint controls */
     .mint-controls { width:100% }
     .mint-controls h1 {
       font-size:1.5rem; font-weight:500;
@@ -111,7 +106,6 @@
       text-align:center; min-height:1.2em;
     }
 
-    /* Social footer */
     .socials {
       position:absolute; bottom:1rem; left:50%;
       transform:translateX(-50%); display:flex; gap:1rem;
@@ -119,13 +113,12 @@
     .socials a { width:24px; height:24px; display:block }
     .socials img { width:100%; height:100%; object-fit:contain }
 
-    /* Mobile tweaks */
     @media(max-width:768px){
-      .lower-section{
+      .lower-section {
         position:static; transform:none; margin:1rem 0; padding:0 10%;
         display:flex; overflow-x:auto; scroll-snap-type:x mandatory;
       }
-      .box{ flex:0 0 80%; max-width:80%; scroll-snap-align:start }
+      .box { flex:0 0 80%; max-width:80%; scroll-snap-align:start; }
     }
   </style>
 </head>
@@ -175,116 +168,115 @@
     import * as ethers from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
     const SONIC10_ABI     = [
-      'function feeForPower(uint8 power) public view returns (uint256)',
-      'function mint(uint8 power) external payable'
+      "function feeForPower(uint8 power) public view returns (uint256)",
+      "function mint(uint8 power) external payable"
     ];
-    const CONTRACT_ADDRESS = '0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778';
+    const CONTRACT_ADDRESS = "0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778";
 
-    // Sonic Mainnet parameters (official)
-    const SONIC_CHAIN_ID   = '0x92'; // 146 decimal
+    // Sonic Mainnet (official)
+    const SONIC_CHAIN_ID   = "0x92"; // 146
     const SONIC_CHAIN_DATA = {
       chainId: SONIC_CHAIN_ID,
-      chainName: 'Sonic Mainnet',
-      nativeCurrency: { name: 'Sonic Token', symbol: 'S', decimals: 18 },
-      rpcUrls: ['https://rpc.soniclabs.com'],
-      blockExplorerUrls: ['https://sonicscan.org']
+      chainName: "Sonic Mainnet",
+      nativeCurrency: { name: "Sonic Token", symbol: "S", decimals: 18 },
+      rpcUrls: ["https://rpc.soniclabs.com"],
+      blockExplorerUrls: ["https://sonicscan.org"]
     };
 
-    const walletBtn   = document.getElementById('wallet-button');
-    const statusEl    = document.getElementById('status');
-    const powerSelect = document.getElementById('power-select');
-    const mintBtn     = document.getElementById('mint-button');
+    // detect EIP-6963 multi-provider
+    const ethWindow = window.ethereum;
+    const engine    = ethWindow?.providers?.[0] || ethWindow;
+
+    const walletBtn   = document.getElementById("wallet-button");
+    const statusEl    = document.getElementById("status");
+    const powerSelect = document.getElementById("power-select");
+    const mintBtn     = document.getElementById("mint-button");
 
     let provider, signer, account;
 
     async function handleAccountsChanged(accounts) {
-      if (accounts.length > 0) {
+      if (accounts.length) {
         account  = accounts[0];
-        provider = new ethers.providers.Web3Provider(window.ethereum);
+        provider = new ethers.providers.Web3Provider(engine);
         signer   = provider.getSigner();
-        walletBtn.textContent = 'Disconnect';
+        walletBtn.textContent = "Disconnect";
       } else {
         account = signer = provider = null;
-        walletBtn.textContent = 'Connect Wallet';
-        statusEl.textContent = '';
+        walletBtn.textContent = "Connect Wallet";
+        statusEl.textContent = "";
       }
     }
 
     async function init() {
-      if (!window.ethereum) return;
-      provider = new ethers.providers.Web3Provider(window.ethereum);
+      if (!engine) return;
+      provider = new ethers.providers.Web3Provider(engine);
       const accounts = await provider.listAccounts();
       await handleAccountsChanged(accounts);
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
+      engine.on("accountsChanged", handleAccountsChanged);
     }
 
-    walletBtn.addEventListener('click', async () => {
-      if (!window.ethereum) {
-        return alert('Please install a wallet extension (MetaMask, Rabby, etc.)');
+    walletBtn.addEventListener("click", async () => {
+      if (!engine) {
+        alert("Please install a wallet extension (MetaMask, Rabby, etc.)");
+        return;
       }
       if (!account) {
-        // Connect + switch to Sonic Mainnet
+        // Connect + switch network
         try {
-          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-          await handleAccountsChanged(accounts);
+          const accts = await engine.request({ method: "eth_requestAccounts" });
+          await handleAccountsChanged(accts);
           try {
-            await window.ethereum.request({
-              method: 'wallet_switchEthereumChain',
+            await engine.request({
+              method: "wallet_switchEthereumChain",
               params: [{ chainId: SONIC_CHAIN_ID }]
             });
-          } catch (switchError) {
-            if (switchError.code === 4902) {
-              await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
+          } catch (switchErr) {
+            if (switchErr.code === 4902) {
+              await engine.request({
+                method: "wallet_addEthereumChain",
                 params: [SONIC_CHAIN_DATA]
               });
-            } else {
-              console.warn('Network switch error:', switchError);
             }
           }
         } catch {
           // user rejected
         }
       } else {
-        // Disconnect sequence:
-        // 1) revoke eth_accounts permission
+        // Disconnect fully:
         try {
-          await window.ethereum.request({
-            method: 'wallet_requestPermissions',
+          await engine.request({
+            method: "wallet_requestPermissions",
             params: [{ eth_accounts: {} }]
           });
-        } catch (e) {
-          console.warn('Permissions revoke failed:', e);
+        } catch {}
+        if (typeof engine.disconnect === "function") {
+          await engine.disconnect();
         }
-        // 2) provider-specific disconnect
-        if (typeof window.ethereum.disconnect === 'function') {
-          await window.ethereum.disconnect();
-        }
-        // 3) reload to reset everything
         handleAccountsChanged([]);
+        // reload so provider state clears
         window.location.reload();
       }
     });
 
-    mintBtn.addEventListener('click', async () => {
-      statusEl.textContent = '';
+    mintBtn.addEventListener("click", async () => {
+      statusEl.textContent = "";
       if (!signer) {
-        statusEl.textContent = 'Please connect your wallet first.';
+        statusEl.textContent = "Please connect your wallet first.";
         return;
       }
-      const power    = parseInt(powerSelect.value, 10);
+      const pwr = parseInt(powerSelect.value, 10);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
       try {
-        statusEl.textContent = 'Fetching fee…';
-        const fee = await contract.feeForPower(power);
-        statusEl.textContent = 'Sending transaction…';
-        const tx = await contract.mint(power, { value: fee });
+        statusEl.textContent = "Fetching fee…";
+        const fee = await contract.feeForPower(pwr);
+        statusEl.textContent = "Sending transaction…";
+        const tx = await contract.mint(pwr, { value: fee });
         statusEl.textContent = `Transaction sent: ${tx.hash}`;
         await tx.wait();
-        statusEl.textContent = `Mint confirmed! Power ${power}.`;
+        statusEl.textContent = `Mint confirmed! Power ${pwr}.`;
       } catch (err) {
         console.error(err);
-        statusEl.textContent = 'Mint failed: ' + (err.error?.message || err.message);
+        statusEl.textContent = "Mint failed: " + (err.error?.message || err.message);
       }
     });
 
