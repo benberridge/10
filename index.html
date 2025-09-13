@@ -22,7 +22,7 @@
 
   <style>
     /* Reset & base */
-    * { box-sizing: border-box; margin:0; padding:0 }
+    * { box-sizing:border-box; margin:0; padding:0 }
     body {
       font-family:'Roboto',sans-serif;
       overflow-y:auto;
@@ -30,7 +30,7 @@
       background-size:400% 400%;
       animation: sonic-bg 20s ease infinite alternate;
     }
-    @keyframes sonic-bg { from { background-position:0% 0% } to { background-position:100% 100% } }
+    @keyframes sonic-bg { from{background-position:0% 0%} to{background-position:100% 100%} }
 
     #wallet-button {
       position:absolute; top:1rem; right:1rem;
@@ -168,29 +168,29 @@
     import * as ethers from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
     const SONIC10_ABI     = [
-      "function feeForPower(uint8 power) public view returns (uint256)",
-      "function mint(uint8 power) external payable"
+      'function feeForPower(uint8 power) public view returns (uint256)',
+      'function mint(uint8 power) external payable'
     ];
-    const CONTRACT_ADDRESS = "0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778";
+    const CONTRACT_ADDRESS = '0x7D9aD34Ea9436659327ba1d765bC9743a7C3E778';
 
-    // Sonic Mainnet (official)
-    const SONIC_CHAIN_ID   = "0x92"; // 146
+    // Sonic Mainnet
+    const SONIC_CHAIN_ID   = '0x92';
     const SONIC_CHAIN_DATA = {
       chainId: SONIC_CHAIN_ID,
-      chainName: "Sonic Mainnet",
-      nativeCurrency: { name: "Sonic Token", symbol: "S", decimals: 18 },
-      rpcUrls: ["https://rpc.soniclabs.com"],
-      blockExplorerUrls: ["https://sonicscan.org"]
+      chainName: 'Sonic Mainnet',
+      nativeCurrency: { name: 'Sonic Token', symbol: 'S', decimals: 18 },
+      rpcUrls: ['https://rpc.soniclabs.com'],
+      blockExplorerUrls: ['https://sonicscan.org']
     };
 
-    // detect EIP-6963 multi-provider
+    // Multi-provider support
     const ethWindow = window.ethereum;
     const engine    = ethWindow?.providers?.[0] || ethWindow;
 
-    const walletBtn   = document.getElementById("wallet-button");
-    const statusEl    = document.getElementById("status");
-    const powerSelect = document.getElementById("power-select");
-    const mintBtn     = document.getElementById("mint-button");
+    const walletBtn   = document.getElementById('wallet-button');
+    const statusEl    = document.getElementById('status');
+    const powerSelect = document.getElementById('power-select');
+    const mintBtn     = document.getElementById('mint-button');
 
     let provider, signer, account;
 
@@ -199,11 +199,11 @@
         account  = accounts[0];
         provider = new ethers.providers.Web3Provider(engine);
         signer   = provider.getSigner();
-        walletBtn.textContent = "Disconnect";
+        walletBtn.textContent = 'Disconnect';
       } else {
         account = signer = provider = null;
-        walletBtn.textContent = "Connect Wallet";
-        statusEl.textContent = "";
+        walletBtn.textContent = 'Connect Wallet';
+        statusEl.textContent = '';
       }
     }
 
@@ -212,28 +212,30 @@
       provider = new ethers.providers.Web3Provider(engine);
       const accounts = await provider.listAccounts();
       await handleAccountsChanged(accounts);
-      engine.on("accountsChanged", handleAccountsChanged);
+      engine.on('accountsChanged', handleAccountsChanged);
     }
 
-    walletBtn.addEventListener("click", async () => {
+    walletBtn.addEventListener('click', async () => {
       if (!engine) {
-        alert("Please install a wallet extension (MetaMask, Rabby, etc.)");
+        alert('Please install a wallet extension (MetaMask, Rabby, etc.)');
         return;
       }
+
       if (!account) {
-        // Connect + switch network
+        // Connect + switch to Sonic Mainnet
         try {
-          const accts = await engine.request({ method: "eth_requestAccounts" });
+          const accts = await engine.request({ method: 'eth_requestAccounts' });
           await handleAccountsChanged(accts);
+          // Attempt network switch
           try {
             await engine.request({
-              method: "wallet_switchEthereumChain",
+              method: 'wallet_switchEthereumChain',
               params: [{ chainId: SONIC_CHAIN_ID }]
             });
           } catch (switchErr) {
             if (switchErr.code === 4902) {
               await engine.request({
-                method: "wallet_addEthereumChain",
+                method: 'wallet_addEthereumChain',
                 params: [SONIC_CHAIN_DATA]
               });
             }
@@ -242,41 +244,36 @@
           // user rejected
         }
       } else {
-        // Disconnect fully:
+        // revoke permission + reload
         try {
           await engine.request({
-            method: "wallet_requestPermissions",
+            method: 'wallet_requestPermissions',
             params: [{ eth_accounts: {} }]
           });
         } catch {}
-        if (typeof engine.disconnect === "function") {
-          await engine.disconnect();
-        }
-        handleAccountsChanged([]);
-        // reload so provider state clears
         window.location.reload();
       }
     });
 
-    mintBtn.addEventListener("click", async () => {
-      statusEl.textContent = "";
+    mintBtn.addEventListener('click', async () => {
+      statusEl.textContent = '';
       if (!signer) {
-        statusEl.textContent = "Please connect your wallet first.";
+        statusEl.textContent = 'Please connect your wallet first.';
         return;
       }
       const pwr = parseInt(powerSelect.value, 10);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
       try {
-        statusEl.textContent = "Fetching fee…";
+        statusEl.textContent = 'Fetching fee…';
         const fee = await contract.feeForPower(pwr);
-        statusEl.textContent = "Sending transaction…";
+        statusEl.textContent = 'Sending transaction…';
         const tx = await contract.mint(pwr, { value: fee });
         statusEl.textContent = `Transaction sent: ${tx.hash}`;
         await tx.wait();
         statusEl.textContent = `Mint confirmed! Power ${pwr}.`;
       } catch (err) {
         console.error(err);
-        statusEl.textContent = "Mint failed: " + (err.error?.message || err.message);
+        statusEl.textContent = 'Mint failed: ' + (err.error?.message || err.message);
       }
     });
 
