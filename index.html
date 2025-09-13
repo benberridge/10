@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
 
-  <!-- CSP: allow only self plus the ESM CDN for ethers -->
+  <!-- CSP via meta tag, now allowing inline CSS & JS -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
-          script-src 'self' https://cdn.jsdelivr.net;
+          script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
+          style-src  'self' https://fonts.googleapis.com 'unsafe-inline';
           connect-src 'self' https://rpc.sonic.network;
-          style-src 'self' https://fonts.googleapis.com;
-          font-src 'self' https://fonts.gstatic.com;
-          img-src 'self' data: https://*.ardrive.net;
+          font-src   'self' https://fonts.gstatic.com;
+          img-src    'self' data: https://*.ardrive.net;
         " />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -33,18 +33,18 @@
       background-size: 400% 400%;
       animation: sonic-bg 20s ease infinite alternate;
     }
-    @keyframes sonic-bg { from { background-position:0% 0% } to { background-position:100% 100% } }
+    @keyframes sonic-bg { from { background-position: 0% 0%; } to { background-position: 100% 100%; } }
 
     /* Wallet button */
     #wallet-button {
       position: absolute; top:1rem; right:1rem;
-      padding: .5rem 1rem; border:none; border-radius:6px;
+      padding:.5rem 1rem; border:none; border-radius:6px;
       background:#1e90ff; color:#fff; font-size:.9rem;
       cursor:pointer; transition:background .2s; z-index:10;
     }
     #wallet-button:hover { background:#007acc }
 
-    /* Banner */
+    /* Banner with silver edge */
     .banner-wrapper {
       margin:2rem auto 1rem;
       max-width:225px; width:60%; border-radius:12px;
@@ -61,7 +61,7 @@
         inset -2px -2px 4px rgba(0,0,0,.2);
     }
     .banner-wrapper img { display:block; width:100%; border-radius:10px; }
-    @keyframes silver-edge { from { background-position:0% 0%,0% 0% } to { background-position:100% 100%,100% 100% } }
+    @keyframes silver-edge { from { background-position:0% 0%,0% 0%; } to { background-position:100% 100%,100% 100%; } }
 
     /* Boxes */
     .lower-section {
@@ -87,7 +87,7 @@
       display:flex; align-items:center; justify-content:center;
       font-size:1.25rem; color:#555;
     }
-    @keyframes orange-blue-edge { from { background-position:0% 0%,0% 0% } to { background-position:100% 100%,100% 100% } }
+    @keyframes orange-blue-edge { from { background-position:0% 0%,0% 0%; } to { background-position:100% 100%,100% 100%; } }
 
     /* Mint controls */
     .mint-controls { width:100%; }
@@ -169,11 +169,10 @@
 
   <div class="socials">
     <a href="#" id="docs-link"><img src="PATH_TO_BOOK_ICON" alt="Docs"></a>
-    <a href="#" id="x-link"   ><img src="PATH_TO_X_ICON"     alt="X"></a>
+    <a href="#" id="x-link"><img src="PATH_TO_X_ICON" alt="X"></a>
     <a href="#" id="telegram-link"><img src="PATH_TO_TELEGRAM_ICON" alt="Telegram"></a>
   </div>
 
-  <!-- Single module: import ethers as ESM so 'ethers' is defined -->
   <script type="module">
     import * as ethers from 'https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.esm.min.js';
 
@@ -214,7 +213,7 @@
         statusEl.textContent = 'Please connect your wallet first.';
         return;
       }
-      const power = parseInt(powerSelect.value, 10);
+      const power    = parseInt(powerSelect.value, 10);
       const contract = new ethers.Contract(CONTRACT_ADDRESS, SONIC10_ABI, signer);
 
       try {
